@@ -41,3 +41,26 @@ docker-run:
 
 build:
 	@go build -o d2vm -ldflags "-s -w -X '$(MODULE).Version=$(VERSION)' -X '$(MODULE).BuildDate=$(shell date)'" ./cmd/d2vm
+
+serve-docs:
+	@docker run --rm -i -t --user=$(UID) -p 8000:8000 -v $(PWD):/docs linkacloud/mkdocs-material serve -f /docs/docs/mkdocs.yml -a 0.0.0.0:8000
+
+.PHONY: build-docs
+build-docs: clean-docs
+	@docker run --rm -v $(PWD):/docs linkacloud/mkdocs-material build -f /docs/docs/mkdocs.yml -d build
+
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+
+GITHUB_PAGES_BRANCH := gh-pages
+
+deploy-docs:
+	@git branch -D gh-pages &> /dev/null || true
+	@git checkout -b $(GITHUB_PAGES_BRANCH)
+	@rm .gitignore && mv docs docs-src && mv docs-src/build docs && rm -rf docs-src
+	@git add . && git commit -m "build docs" && git push origin --force $(GITHUB_PAGES_BRANCH)
+	@git checkout $(GIT_BRANCH)
+
+docs: build-docs deploy-docs
+
+clean-docs:
+	@rm -rf docs/build
