@@ -1,8 +1,0 @@
-.idea
-tests
-*.qcow2
-
-dist/
-.goreleaser.yaml
-docs/build
-docs-src
